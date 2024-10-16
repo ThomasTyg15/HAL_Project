@@ -2,13 +2,10 @@ Your GPIO feature have to abstract the Atmega328p (Arduino Uno). The Tensilica L
 is not mandatory for now.
   • Your code allow to control all the digital pin of the target(s), as input or output. More precisely, it
   can:
-    o Configure any digital pin as input, or as output.
     o Read and write all digital pins.
-    o If you want (but is not mandatory), you can abstract the pull-up resistor feature (both
-    target support this option) and the pull-down resistor feature (only the Tensilica support
-    this option).
+ 
 
-This code allows you to manipulate your arduino's PINs, read or write them, set Input or Output. In the hard-coded code, first specify which PIN you want to work on, then whether you want to read or write it, or whether you want to set it to inpout or output. Then copy this code into your MAIN and you can push it onto your arduino. 
+This code allows you to manipulate your arduino's PINs, read or write them. In the hard-coded code, first specify which PIN you want to work on, then whether you want to read or write it. Then copy this code into your MAIN and you can push it onto your arduino. 
 
 MAIN : 
 #![no_std]
