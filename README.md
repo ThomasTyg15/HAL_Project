@@ -1,5 +1,10 @@
 # HAL_Project
 I am trying to understand how to manipulate my arduino with RUST code. 
 
-# 14/10/2024
-The first step was to push my rust code into the arduino. I was trying on windows but i always had problems of rust version ect... I finally found a github page that explains wich version of rust and wich packages to install on linux. Now it works and i arrave to push code in my arduino. I only tried to manipulate the big LED to see if it works or not. 
+In the min branch you'll find all the files you need. 
+
+In src you'll find the main code, which contains functional and example code that turns on the LED on your arduino uno for 5s. 
+
+In Cargo.toml you'll find all the configuration you need to run your rust code to your arduino uno. 
+
+Then you'll find Lab1, Lab 2 etc., which are codes with different functionalities, to put in your hand. 
