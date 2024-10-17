@@ -7,4 +7,4 @@ In src you'll find the main code, which contains functional and example code tha
 
 In Cargo.toml you'll find all the configuration you need to run your rust code to your arduino uno. 
 
-Then you'll find Lab1, Lab 2 etc., which are codes with different functionalities, to put in your hand. 
+Then you'll find Lab1, Lab 2 etc., which are codes with different functionalities, to put in your main.rs. 
