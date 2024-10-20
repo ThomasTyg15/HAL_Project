@@ -1,97 +1,152 @@
-### Code Overview and Usage
+This Rust program allows users to control the digital pins (D0 to D13) on the Arduino Uno by directly manipulating the ATmega328p microcontroller's registers. The code defines pointers to access the Data Direction Register (DDR), the Port Register (PORT), and the Pin Register (PIN) for both PORTB and PORTD. 
 
-This Rust program allows users to control the digital pins (D1 to D13) on the Arduino Uno by directly manipulating the ATmega328p microcontroller's registers. The code defines pointers to access the Data Direction Register (DDR) and the Port Register (PORT) for both PORTB and PORTD. By setting the `PIN_NUMBER` constant, you can specify which pin to manipulate, while the `LED_STATE` constant determines whether the pin should be set to HIGH (true) or LOW (false).
+It provides functionality to configure any digital pin as either an input or output, and to read or write the pin's state. The `PIN_NUMBER` constant specifies which pin to manipulate, while the `IS_OUTPUT` constant controls whether the pin is configured as an output (true) or input (false). If the pin is configured as output, the `OUTPUT_STATE` constant determines whether it is set to HIGH (true) or LOW (false). If the pin is configured as input, the program reads and stores the pin's state, allowing you to monitor whether the pin is HIGH or LOW.
 
-To use the code, simply change `PIN_NUMBER` to the desired pin number (1 to 13) and adjust `LED_STATE` to true or false based on whether you want the pin to be on or off. After modifying these values, compile and upload the code to your Arduino Uno. Connect an LED or other output device to the chosen pin to observe its behavior. This program provides a straightforward way to interact with the Arduino’s digital pins at a low level.
-
-
+To use the code, simply change `PIN_NUMBER` to the desired pin number (0 to 13), adjust `IS_OUTPUT` to true or false based on the desired pin configuration, and set `OUTPUT_STATE` accordingly if the pin is an output. After modifying these values, compile and upload the code to your Arduino Uno. You can now control or read the state of any digital pin at a low level, making this program a versatile tool for interacting with the Arduino’s digital pins.
 
 ### MAIN : 
 
 #![no_std]
 #![no_main]
 
-use panic_halt as _;  // Utilisé pour gérer les panic
+use panic_halt as _;  // Used to handle panic
 
-// Définir des pointeurs pour accéder directement aux registres de l'Atmega328p
-const DDRB: *mut u8 = 0x24 as *mut u8;  // Adresse du registre DDRB (PORTB)
-const PORTB: *mut u8 = 0x25 as *mut u8; // Adresse du registre PORTB
-const DDRD: *mut u8 = 0x2A as *mut u8;  // Adresse du registre DDRD (PORTD)
-const PORTD: *mut u8 = 0x2B as *mut u8; // Adresse du registre PORTD
+// Pointers to Atmega328p registers
+const DDRB: *mut u8 = 0x24 as *mut u8;  // Data Direction Register B (PORTB)
+const PORTB: *mut u8 = 0x25 as *mut u8; // Output Register B
+const PINB: *mut u8 = 0x23 as *mut u8;  // Input Pins Address for PORTB
+const DDRD: *mut u8 = 0x2A as *mut u8;  // Data Direction Register D (PORTD)
+const PORTD: *mut u8 = 0x2B as *mut u8; // Output Register D
+const PIND: *mut u8 = 0x29 as *mut u8;  // Input Pins Address for PORTD
 
-// Configurer l'état souhaité (true pour HIGH, false pour LOW)
-const LED_STATE: bool = true; // Changez à `false` pour LOW
+// Select pin number (0 to 13)
+const PIN_NUMBER: u8 = 13; // Change the pin number here
 
-// Sélectionner le numéro de pin (1 à 13)
-const PIN_NUMBER: u8 = 13; // Changez le numéro de pin ici
+// Set mode (true for output, false for input)
+const IS_OUTPUT: bool = true; // Change to `false` for input configuration
+
+// Set desired output state (true for HIGH, false for LOW) if in output mode
+const OUTPUT_STATE: bool = true; // Change to `false` for LOW
 
 #[arduino_hal::entry]
 fn main() -> ! {
     unsafe {
-        // Configurer le pin choisi comme sortie
-        match PIN_NUMBER {
-            // Configurer les pins du PORTD (D0 à D7)
-            0 => *DDRD |= 1 << 0,  // Configure PD0 (pin 0)
-            1 => *DDRD |= 1 << 1,  // Configure PD1 (pin 1)
-            2 => *DDRD |= 1 << 2,  // Configure PD2 (pin 2)
-            3 => *DDRD |= 1 << 3,  // Configure PD3 (pin 3)
-            4 => *DDRD |= 1 << 4,  // Configure PD4 (pin 4)
-            5 => *DDRD |= 1 << 5,  // Configure PD5 (pin 5)
-            6 => *DDRD |= 1 << 6,  // Configure PD6 (pin 6)
-            7 => *DDRD |= 1 << 7,  // Configure PD7 (pin 7)
-            // Configurer les pins du PORTB (D8 à D13)
-            8  => *DDRB |= 1 << 0,  // Configure PB0 (pin 8)
-            9  => *DDRB |= 1 << 1,  // Configure PB1 (pin 9)
-            10 => *DDRB |= 1 << 2,  // Configure PB2 (pin 10)
-            11 => *DDRB |= 1 << 3,  // Configure PB3 (pin 11)
-            12 => *DDRB |= 1 << 4,  // Configure PB4 (pin 12)
-            13 => *DDRB |= 1 << 5,  // Configure PB5 (pin 13)
-            _ => panic!("Pin non supporté"), // Gérer les cas non supportés
-        }
-
-        // Mettre le pin choisi à l'état souhaité
-        if LED_STATE {
-            match PIN_NUMBER {
-                // Mettre à HIGH
-                0 => *PORTD |= 1 << 0,  // Mettre PD0 en HIGH
-                1 => *PORTD |= 1 << 1,  // Mettre PD1 en HIGH
-                2 => *PORTD |= 1 << 2,  // Mettre PD2 en HIGH
-                3 => *PORTD |= 1 << 3,  // Mettre PD3 en HIGH
-                4 => *PORTD |= 1 << 4,  // Mettre PD4 en HIGH
-                5 => *PORTD |= 1 << 5,  // Mettre PD5 en HIGH
-                6 => *PORTD |= 1 << 6,  // Mettre PD6 en HIGH
-                7 => *PORTD |= 1 << 7,  // Mettre PD7 en HIGH
-                8  => *PORTB |= 1 << 0,  // Mettre PB0 en HIGH
-                9  => *PORTB |= 1 << 1,  // Mettre PB1 en HIGH
-                10 => *PORTB |= 1 << 2,  // Mettre PB2 en HIGH
-                11 => *PORTB |= 1 << 3,  // Mettre PB3 en HIGH
-                12 => *PORTB |= 1 << 4,  // Mettre PB4 en HIGH
-                13 => *PORTB |= 1 << 5,  // Mettre PB5 en HIGH
-                _ => panic!("Pin non supporté"), // Gérer les cas non supportés
-            }
+        // Configure pin as input or output
+        if IS_OUTPUT {
+            configure_pin_as_output(PIN_NUMBER);
+            write_pin(PIN_NUMBER, OUTPUT_STATE);
         } else {
-            match PIN_NUMBER {
-                // Mettre à LOW
-                0 => *PORTD &= !(1 << 0),  // Mettre PD0 en LOW
-                1 => *PORTD &= !(1 << 1),  // Mettre PD1 en LOW
-                2 => *PORTD &= !(1 << 2),  // Mettre PD2 en LOW
-                3 => *PORTD &= !(1 << 3),  // Mettre PD3 en LOW
-                4 => *PORTD &= !(1 << 4),  // Mettre PD4 en LOW
-                5 => *PORTD &= !(1 << 5),  // Mettre PD5 en LOW
-                6 => *PORTD &= !(1 << 6),  // Mettre PD6 en LOW
-                7 => *PORTD &= !(1 << 7),  // Mettre PD7 en LOW
-                8  => *PORTB &= !(1 << 0),  // Mettre PB0 en LOW
-                9  => *PORTB &= !(1 << 1),  // Mettre PB1 en LOW
-                10 => *PORTB &= !(1 << 2),  // Mettre PB2 en LOW
-                11 => *PORTB &= !(1 << 3),  // Mettre PB3 en LOW
-                12 => *PORTB &= !(1 << 4),  // Mettre PB4 en LOW
-                13 => *PORTB &= !(1 << 5),  // Mettre PB5 en LOW
-                _ => panic!("Pin non supporté"), // Gérer les cas non supportés
-            }
+            configure_pin_as_input(PIN_NUMBER);
+            let input_state = read_pin(PIN_NUMBER);
+            // Process input_state if needed
         }
     }
 
-    // Boucle infinie pour maintenir l'état
-    loop {}
+    loop {}  // Infinite loop to maintain state
 }
+
+/// Configure a pin as output
+unsafe fn configure_pin_as_output(pin: u8) {
+    match pin {
+        0 => *DDRD |= 1 << 0,
+        1 => *DDRD |= 1 << 1,
+        2 => *DDRD |= 1 << 2,
+        3 => *DDRD |= 1 << 3,
+        4 => *DDRD |= 1 << 4,
+        5 => *DDRD |= 1 << 5,
+        6 => *DDRD |= 1 << 6,
+        7 => *DDRD |= 1 << 7,
+        8  => *DDRB |= 1 << 0,
+        9  => *DDRB |= 1 << 1,
+        10 => *DDRB |= 1 << 2,
+        11 => *DDRB |= 1 << 3,
+        12 => *DDRB |= 1 << 4,
+        13 => *DDRB |= 1 << 5,
+        _ => panic!("Unsupported pin"),
+    }
+}
+
+/// Configure a pin as input
+unsafe fn configure_pin_as_input(pin: u8) {
+    match pin {
+        0 => *DDRD &= !(1 << 0),
+        1 => *DDRD &= !(1 << 1),
+        2 => *DDRD &= !(1 << 2),
+        3 => *DDRD &= !(1 << 3),
+        4 => *DDRD &= !(1 << 4),
+        5 => *DDRD &= !(1 << 5),
+        6 => *DDRD &= !(1 << 6),
+        7 => *DDRD &= !(1 << 7),
+        8  => *DDRB &= !(1 << 0),
+        9  => *DDRB &= !(1 << 1),
+        10 => *DDRB &= !(1 << 2),
+        11 => *DDRB &= !(1 << 3),
+        12 => *DDRB &= !(1 << 4),
+        13 => *DDRB &= !(1 << 5),
+        _ => panic!("Unsupported pin"),
+    }
+}
+
+/// Write a value (HIGH or LOW) to a pin configured as output
+unsafe fn write_pin(pin: u8, state: bool) {
+    if state {
+        match pin {
+            0 => *PORTD |= 1 << 0,
+            1 => *PORTD |= 1 << 1,
+            2 => *PORTD |= 1 << 2,
+            3 => *PORTD |= 1 << 3,
+            4 => *PORTD |= 1 << 4,
+            5 => *PORTD |= 1 << 5,
+            6 => *PORTD |= 1 << 6,
+            7 => *PORTD |= 1 << 7,
+            8  => *PORTB |= 1 << 0,
+            9  => *PORTB |= 1 << 1,
+            10 => *PORTB |= 1 << 2,
+            11 => *PORTB |= 1 << 3,
+            12 => *PORTB |= 1 << 4,
+            13 => *PORTB |= 1 << 5,
+            _ => panic!("Unsupported pin"),
+        }
+    } else {
+        match pin {
+            0 => *PORTD &= !(1 << 0),
+            1 => *PORTD &= !(1 << 1),
+            2 => *PORTD &= !(1 << 2),
+            3 => *PORTD &= !(1 << 3),
+            4 => *PORTD &= !(1 << 4),
+            5 => *PORTD &= !(1 << 5),
+            6 => *PORTD &= !(1 << 6),
+            7 => *PORTD &= !(1 << 7),
+            8  => *PORTB &= !(1 << 0),
+            9  => *PORTB &= !(1 << 1),
+            10 => *PORTB &= !(1 << 2),
+            11 => *PORTB &= !(1 << 3),
+            12 => *PORTB &= !(1 << 4),
+            13 => *PORTB &= !(1 << 5),
+            _ => panic!("Unsupported pin"),
+        }
+    }
+}
+
+/// Read the state of a pin configured as input (returns true for HIGH, false for LOW)
+unsafe fn read_pin(pin: u8) -> bool {
+    match pin {
+        0 => (*PIND & (1 << 0)) != 0,
+        1 => (*PIND & (1 << 1)) != 0,
+        2 => (*PIND & (1 << 2)) != 0,
+        3 => (*PIND & (1 << 3)) != 0,
+        4 => (*PIND & (1 << 4)) != 0,
+        5 => (*PIND & (1 << 5)) != 0,
+        6 => (*PIND & (1 << 6)) != 0,
+        7 => (*PIND & (1 << 7)) != 0,
+        8  => (*PINB & (1 << 0)) != 0,
+        9  => (*PINB & (1 << 1)) != 0,
+        10 => (*PINB & (1 << 2)) != 0,
+        11 => (*PINB & (1 << 3)) != 0,
+        12 => (*PINB & (1 << 4)) != 0,
+        13 => (*PINB & (1 << 5)) != 0,
+        _ => panic!("Unsupported pin"),
+    }
+}
+
 
