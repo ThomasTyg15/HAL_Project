@@ -1,4 +1,4 @@
-# HAL_Project Thomas Escaffre and Azhar El-Hidaoui
+# HAL_Project Thomas Escaffre and Azhar El Hidaoui
 I am trying to understand how to manipulate my arduino with RUST code. 
 
 In the min branch you'll find all the files you need. 
