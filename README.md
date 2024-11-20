@@ -67,10 +67,11 @@ Compile the project for different targets using feature flags:
 
 ```bash
 # For ATmega328P
-cargo build --features="atmega328p"
+cargo build --target avr-atmega328p.json
 
 # For Cortex-M3
-cargo build --features="stm32f1"
+cargo build --target thumbv7m-none-eabi
+
 ```
 
 This ensures the HAL is correctly compiled for the intended hardware platform.
