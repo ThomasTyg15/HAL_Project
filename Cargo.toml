@@ -1,31 +1,11 @@
 [package]
-name = "my_hal"
+name = "my_hal_project"
 version = "0.1.0"
 edition = "2021"
-authors = ["Thomas/Azhar"]
 
-[dependencies]
-embedded-hal = "0.2.7"  # Traits de base pour HAL embarqué
-
-[target.'cfg(target_arch = "avr")'.dependencies]
-avr-device = "0.5.1"              # Support ATmega328p
-panic-halt = "0.2.0"              # Panic handler pour AVR
-
-[target.'cfg(target_arch = "arm")'.dependencies]
-cortex-m = "0.7"                  # Support Cortex-M
-cortex-m-rt = "0.7"              # Runtime pour Cortex-M
-panic-halt = "0.2.0"             # Panic handler pour ARM
-stm32f1 = { version = "0.14", features = ["stm32f103"], optional = true }  # Pour STM32F1xx
 
 [features]
-default = ["atmega328p"]
+# Active le support pour les microcontrôleurs spécifiques
 atmega328p = []
-stm32f1 = ["dep:stm32f1"]
+cortex_m3 = []
 
-[[example]]
-name = "atmega328p_blink"
-required-features = ["atmega328p"]
-
-[[example]]
-name = "cortex_m3_blink"
-required-features = ["stm32f1"]

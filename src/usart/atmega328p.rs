@@ -1,85 +1,38 @@
-use avr_device::atmega328p::{USART0};
-use super::traits::UsartInterface;
+use super::USART;
 
-pub struct AtmegaUsart {
-    usart: *mut USART0,
+const UBRR0H: *mut u8 = 0xC5 as *mut u8;
+const UBRR0L: *mut u8 = 0xC4 as *mut u8;
+const UCSR0A: *mut u8 = 0xC0 as *mut u8;
+const UCSR0B: *mut u8 = 0xC1 as *mut u8;
+const UCSR0C: *mut u8 = 0xC2 as *mut u8;
+const UDR0: *mut u8 = 0xC6 as *mut u8;
+
+pub struct Atmega328p;
+
+impl USART for Atmega328p {
+    fn init(baud_rate: u32) {
+        let ubrr_value = (16_000_000 / (16 * baud_rate) - 1) as u16;
+        unsafe {
+            *UBRR0H = (ubrr_value >> 8) as u8;
+            *UBRR0L = ubrr_value as u8;
+
+            *UCSR0B = 1 << 3 | 1 << 4; // Enable TX (bit 3) and RX (bit 4)
+            *UCSR0C = 1 << 1 | 1 << 2; // Set frame format: 8 data bits, 1 stop bit
+        }
+    }
+
+    fn write(data: u8) {
+        unsafe {
+            while *UCSR0A & (1 << 5) == 0 {} // Wait for transmit buffer to be empty
+            *UDR0 = data; // Load data into the buffer
+        }
+    }
+
+    fn read() -> u8 {
+        unsafe {
+            while *UCSR0A & (1 << 7) == 0 {} // Wait for data to be received
+            *UDR0 // Return received data
+        }
+    }
 }
 
-#[derive(Debug)]
-pub struct AtmegaUsartError;
-
-impl AtmegaUsart {
-    pub fn new(usart: *mut USART0) -> Self {
-        Self { usart }
-    }
-
-    fn calculate_ubrr(baud_rate: u32) -> u16 {
-        let clock_rate: u32 = 16_000_000;
-        ((clock_rate / 16) / baud_rate - 1) as u16
-    }
-}
-
-impl UsartInterface for AtmegaUsart {
-    type Error = AtmegaUsartError;
-
-    fn init(&mut self, baud_rate: u32) -> Result<(), Self::Error> {
-        let ubrr = Self::calculate_ubrr(baud_rate);
-        unsafe {
-            (*self.usart).ubrr0h.write(|w| w.bits((ubrr >> 8) as u8));
-            (*self.usart).ubrr0l.write(|w| w.bits(ubrr as u8));
-            (*self.usart).ucsr0b.write(|w| w
-                .rxen0().set_bit()
-                .txen0().set_bit()
-            );
-            (*self.usart).ucsr0c.write(|w| w
-                .ucsz00().set_bit()
-                .ucsz01().set_bit()
-            );
-        }
-        Ok(())
-    }
-
-    fn send_byte(&mut self, byte: u8) -> Result<(), Self::Error> {
-        while !self.is_tx_ready()? {}
-        unsafe {
-            (*self.usart).udr0.write(|w| w.bits(byte));
-        }
-        Ok(())
-    }
-
-    fn receive_byte(&mut self) -> Result<u8, Self::Error> {
-        while !self.is_rx_ready()? {}
-        unsafe {
-            Ok((*self.usart).udr0.read().bits())
-        }
-    }
-
-    fn is_rx_ready(&self) -> Result<bool, Self::Error> {
-        unsafe {
-            Ok((*self.usart).ucsr0a.read().rxc0().bit_is_set())
-        }
-    }
-
-    fn is_tx_ready(&self) -> Result<bool, Self::Error> {
-        unsafe {
-            Ok((*self.usart).ucsr0a.read().udre0().bit_is_set())
-        }
-    }
-
-    fn send_bytes(&mut self, bytes: &[u8]) -> Result<(), Self::Error> {
-        for &byte in bytes {
-            self.send_byte(byte)?;
-        }
-        Ok(())
-    }
-
-    fn read_bytes(&mut self, buffer: &mut [u8]) -> Result<usize, Self::Error> {
-        for (i, byte) in buffer.iter_mut().enumerate() {
-            *byte = self.receive_byte()?;
-            if *byte == b'\n' {
-                return Ok(i + 1);
-            }
-        }
-        Ok(buffer.len())
-    }
-}

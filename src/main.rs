@@ -1,73 +1,27 @@
-#![no_std]
-#![no_main]
+use my_hal_project::gpio::{configure_pin, write_pin, read_pin, Direction};
+use my_hal_project::usart::{init as usart_init, write as usart_write, read as usart_read};
+use my_hal_project::spi::{init as spi_init, transfer as spi_transfer};
 
-use core::panic::PanicInfo;
-use my_hal::{
-    hal::Target,
-    gpio::{AtmegaPin, CortexPin, Direction},
-    usart::{AtmegaUsart, CortexUsart},
-    drivers::{Led, Serial},
-};
 
-#[cfg(feature = "atmega328p")]
-use avr_device::atmega328p::Peripherals as AtmegaPeripherals;
+fn main() {
+    // --- GPIO Example ---
+    println!("--- GPIO Example ---");
+    configure_pin(2, Direction::Output); // Configurer la broche 2 comme sortie
+    write_pin(2, true); // Écrire HIGH sur la broche 2
+    let gpio_state = read_pin(2); // Lire l'état de la broche 2
+    println!("GPIO Pin 2 State: {}", gpio_state);
 
-#[cfg(feature = "stm32f1")]
-use stm32f1::stm32f103::Peripherals as CortexPeripherals;
+    // --- USART Example ---
+    println!("--- USART Example ---");
+    usart_init(9600); // Initialiser l'USART avec un baud rate de 9600
+    usart_write(b'H'); // Envoyer 'H' via USART
+    let received = usart_read(); // Lire un octet reçu via USART
+    println!("USART Received: {}", received as char);
 
-#[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
-    loop {}
+    // --- SPI Example ---
+    println!("--- SPI Example ---");
+    spi_init(); // Initialiser le SPI
+    let spi_response = spi_transfer(0x42); // Transférer un octet via SPI et lire la réponse
+    println!("SPI Response: 0x{:02X}", spi_response);
 }
 
-#[cfg(feature = "atmega328p")]
-#[no_mangle]
-pub extern "C" fn main() -> ! {
-    // Initialisation pour ATmega328P
-    let peripherals = unsafe { AtmegaPeripherals::take().unwrap() };
-    
-    // Configuration LED sur pin 13 (Arduino built-in LED)
-    let pin = AtmegaPin::new(&mut peripherals.PORTB as *mut _, 5);
-    let mut led = Led::new(pin).unwrap();
-    
-    // Configuration USART
-    let usart = AtmegaUsart::new(&mut peripherals.USART0 as *mut _);
-    let mut serial = Serial::new(usart, 9600).unwrap();
-
-    // Exemple d'utilisation
-    loop {
-        led.toggle().unwrap();
-        serial.send_string("Hello from ATmega328P!\r\n").unwrap();
-        
-        // Attente simple
-        for _ in 0..100000 {
-            core::hint::spin_loop();
-        }
-    }
-}
-
-#[cfg(feature = "stm32f1")]
-#[cortex_m_rt::entry]
-fn main() -> ! {
-    // Initialisation pour Cortex-M3
-    let peripherals = unsafe { CortexPeripherals::take().unwrap() };
-    
-    // Configuration LED sur pin PA5 (souvent utilisée comme LED sur STM32)
-    let pin = CortexPin::new(&mut peripherals.GPIOA as *mut _, 5);
-    let mut led = Led::new(pin).unwrap();
-    
-    // Configuration USART
-    let usart = CortexUsart::new(&mut peripherals.USART1 as *mut _);
-    let mut serial = Serial::new(usart, 115200).unwrap();
-
-    // Exemple d'utilisation
-    loop {
-        led.toggle().unwrap();
-        serial.send_string("Hello from Cortex-M3!\r\n").unwrap();
-        
-        // Attente simple
-        for _ in 0..1000000 {
-            core::hint::spin_loop();
-        }
-    }
-}

@@ -1,76 +1,44 @@
-use avr_device::atmega328p::{PORT};
-use super::traits::{GpioPin, Direction, PinMode};
+use super::{Direction, GPIO};
 
-pub struct AtmegaPin {
-    port: *mut PORT,
-    pin: u8,
-}
+const DDRB: *mut u8 = 0x24 as *mut u8;
+const PORTB: *mut u8 = 0x25 as *mut u8;
+const PINB: *mut u8 = 0x23 as *mut u8;
 
-impl AtmegaPin {
-    pub fn new(port: *mut PORT, pin: u8) -> Self {
-        Self { port, pin }
-    }
-}
+pub struct Atmega328p;
 
-#[derive(Debug)]
-pub struct AtmegaError;
-
-impl GpioPin for AtmegaPin {
-    type Error = AtmegaError;
-
-    fn set_direction(&mut self, direction: Direction) -> Result<(), Self::Error> {
+impl GPIO for Atmega328p {
+    fn configure_pin(pin: u8, direction: Direction) {
         unsafe {
             match direction {
-                Direction::Output => (*self.port).ddr.modify(|r, w| w.bits(r.bits() | (1 << self.pin))),
-                Direction::Input => (*self.port).ddr.modify(|r, w| w.bits(r.bits() & !(1 << self.pin))),
+                Direction::Input => {
+                    // Clear bit in DDRB to configure as input
+                    *DDRB &= !(1 << pin);
+                }
+                Direction::Output => {
+                    // Set bit in DDRB to configure as output
+                    *DDRB |= 1 << pin;
+                }
             }
         }
-        Ok(())
     }
 
-    fn set_mode(&mut self, mode: PinMode) -> Result<(), Self::Error> {
+    fn read_pin(pin: u8) -> bool {
         unsafe {
-            match mode {
-                PinMode::PullUp => {
-                    (*self.port).port.modify(|r, w| w.bits(r.bits() | (1 << self.pin)));
-                }
-                PinMode::Floating => {
-                    (*self.port).port.modify(|r, w| w.bits(r.bits() & !(1 << self.pin)));
-                }
-                PinMode::PullDown => return Err(AtmegaError), // ATmega328P doesn't support pull-down
+            // Read the state of the pin from PINB
+            (*PINB & (1 << pin)) != 0
+        }
+    }
+
+    fn write_pin(pin: u8, value: bool) {
+        unsafe {
+            if value {
+                // Set bit in PORTB to write HIGH
+                *PORTB |= 1 << pin;
+            } else {
+                // Clear bit in PORTB to write LOW
+                *PORTB &= !(1 << pin);
             }
         }
-        Ok(())
-    }
-
-    fn set_high(&mut self) -> Result<(), Self::Error> {
-        unsafe {
-            (*self.port).port.modify(|r, w| w.bits(r.bits() | (1 << self.pin)));
-        }
-        Ok(())
-    }
-
-    fn set_low(&mut self) -> Result<(), Self::Error> {
-        unsafe {
-            (*self.port).port.modify(|r, w| w.bits(r.bits() & !(1 << self.pin)));
-        }
-        Ok(())
-    }
-
-    fn is_high(&self) -> Result<bool, Self::Error> {
-        unsafe {
-            Ok(((*self.port).pin.read().bits() & (1 << self.pin)) != 0)
-        }
-    }
-
-    fn is_low(&self) -> Result<bool, Self::Error> {
-        self.is_high().map(|v| !v)
-    }
-
-    fn toggle(&mut self) -> Result<(), Self::Error> {
-        unsafe {
-            (*self.port).pin.modify(|r, w| w.bits(r.bits() ^ (1 << self.pin)));
-        }
-        Ok(())
     }
 }
+

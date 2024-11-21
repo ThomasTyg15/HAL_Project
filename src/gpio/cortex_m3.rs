@@ -1,88 +1,45 @@
-m32f103::GPIO;
-use super::traits::{GpioPin, Direction, PinMode};
+use super::{Direction, GPIO};
 
-pub struct CortexPin {
-    gpio: *mut GPIO,
-    pin: u8,
-}
+const GPIOA_MODER: *mut u32 = 0x48000000 as *mut u32;
+const GPIOA_ODR: *mut u32 = 0x48000014 as *mut u32;
+const GPIOA_IDR: *mut u32 = 0x48000010 as *mut u32;
 
-impl CortexPin {
-    pub fn new(gpio: *mut GPIO, pin: u8) -> Self {
-        Self { gpio, pin }
-    }
-}
+pub struct CortexM3;
 
-#[derive(Debug)]
-pub struct CortexError;
-
-impl GpioPin for CortexPin {
-    type Error = CortexError;
-
-    fn set_direction(&mut self, direction: Direction) -> Result<(), Self::Error> {
+impl GPIO for CortexM3 {
+    fn configure_pin(pin: u8, direction: Direction) {
         unsafe {
-            let offset = (self.pin as usize) * 4;
             match direction {
-                Direction::Output => {
-                    (*self.gpio).cr[self.pin as usize / 8]
-                        .modify(|r, w| w.bits((r.bits() & !(0xF << offset)) | (0x3 << offset)));
-                }
                 Direction::Input => {
-                    (*self.gpio).cr[self.pin as usize / 8]
-                        .modify(|r, w| w.bits((r.bits() & !(0xF << offset)) | (0x4 << offset)));
+                    // Clear bits in MODER register to configure as input
+                    *GPIOA_MODER &= !(0b11 << (pin * 2));
+                }
+                Direction::Output => {
+                    // Set bits in MODER register to configure as output
+                    *GPIOA_MODER &= !(0b11 << (pin * 2));
+                    *GPIOA_MODER |= 0b01 << (pin * 2);
                 }
             }
         }
-        Ok(())
     }
 
-    fn set_mode(&mut self, mode: PinMode) -> Result<(), Self::Error> {
+    fn read_pin(pin: u8) -> bool {
         unsafe {
-            let offset = (self.pin as usize) * 4;
-            match mode {
-                PinMode::PullUp => {
-                    (*self.gpio).odr.modify(|r, w| w.bits(r.bits() | (1 << self.pin)));
-                }
-                PinMode::PullDown => {
-                    (*self.gpio).odr.modify(|r, w| w.bits(r.bits() & !(1 << self.pin)));
-                }
-                PinMode::Floating => {
-                    (*self.gpio).cr[self.pin as usize / 8]
-                        .modify(|r, w| w.bits((r.bits() & !(0xF << offset)) | (0x4 << offset)));
-                }
+            // Read the state of the pin from IDR
+            (*GPIOA_IDR & (1 << pin)) != 0
+        }
+    }
+
+    fn write_pin(pin: u8, value: bool) {
+        unsafe {
+            if value {
+                // Set bit in ODR to write HIGH
+                *GPIOA_ODR |= 1 << pin;
+            } else {
+                // Clear bit in ODR to write LOW
+                *GPIOA_ODR &= !(1 << pin);
             }
-        }
-        Ok(())
-    }
-
-    fn set_high(&mut self) -> Result<(), Self::Error> {
-        unsafe {
-            (*self.gpio).bsrr.write(|w| w.bits(1 << self.pin));
-        }
-        Ok(())
-    }
-
-    fn set_low(&mut self) -> Result<(), Self::Error> {
-        unsafe {
-            (*self.gpio).brr.write(|w| w.bits(1 << self.pin));
-        }
-        Ok(())
-    }
-
-    fn is_high(&self) -> Result<bool, Self::Error> {
-        unsafe {
-            Ok(((*self.gpio).idr.read().bits() & (1 << self.pin)) != 0)
-        }
-    }
-
-    fn is_low(&self) -> Result<bool, Self::Error> {
-        self.is_high().map(|v| !v)
-    }
-
-    fn toggle(&mut self) -> Result<(), Self::Error> {
-        if self.is_high()? {
-            self.set_low()
-        } else {
-            self.set_high()
         }
     }
 }
+
