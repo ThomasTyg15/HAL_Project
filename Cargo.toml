@@ -3,9 +3,23 @@ name = "my_hal_project"
 version = "0.1.0"
 edition = "2021"
 
+[dependencies]
+# Dépendances pour Cortex-M3
+cortex-m = "0.7"           # Gestion du Cortex-M
+cortex-m-rt = "0.7"        # Runtime Cortex-M
+embedded-hal = "0.2.7"     
+panic-halt = "0.2"
 
 [features]
-# Active le support pour les microcontrôleurs spécifiques
 atmega328p = []
 cortex_m3 = []
+
+[profile.dev]
+panic = "abort"           
+
+[profile.release]
+panic = "abort"           
+
+[build]
+target = "avr-specs/avr-atmega328p.json"
 

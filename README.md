@@ -67,7 +67,7 @@ To compile the project for a specific microcontroller, use Rust's feature flags:
 
 - For **Cortex-M3**:
   ```bash
-  cargo build --features cortex_m3
+  cargo build --features cortex_m3 --target thumbv7m-none-eabi
   ```
 
 ### **3. Flash the Firmware**
