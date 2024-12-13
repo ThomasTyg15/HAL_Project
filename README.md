@@ -101,3 +101,5 @@ You can run unit tests (in software) to check the logic behind the GPIO, USART, 
 
 These tests will verify that the logic of configuring pins, reading and writing data, and sending/receiving messages is correct.
 
+[CORRECTION USART] (Don't hesitate to remove this part)
+You could try implementing the internal clock and the different modes (synchronous and asynchronous basically (or even more precisely with asynchronous double-speed in the atmega for example))
