@@ -10,4 +10,5 @@ fn panic(_info: &PanicInfo) -> ! {
 pub mod gpio;
 pub mod usart;
 pub mod spi;
+pub mod i2c;
 

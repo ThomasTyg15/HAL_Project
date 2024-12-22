@@ -42,9 +42,14 @@ my_hal_project/
 │   │   ├── atmega328p.rs # USART implementation for Atmega328p
 │   │   └── cortex_m3.rs # USART implementation for Cortex-M3
 │   ├── spi/             # SPI module
-│       ├── mod.rs       # Interface for SPI
-│       ├── atmega328p.rs # SPI implementation for Atmega328p
-│       └── cortex_m3.rs # SPI implementation for Cortex-M3
+│   │   ├── mod.rs       # Interface for SPI
+│   │   ├── atmega328p.rs # SPI implementation for Atmega328p
+│   │   └── cortex_m3.rs # SPI implementation for Cortex-M3
+├   ├──I2C/           # I2C module
+│       ├── mod.rs       # Interface for I2C
+│       ├── atmega328p.rs # I2C implementation for Atmega328p
+│       └── cortex_m3.rs # I2C implementation for Cortex-M3
+
 ```
 
 ## **Getting Started**
