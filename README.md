@@ -106,3 +106,10 @@ You can run unit tests (in software) to check the logic behind the GPIO, USART, 
 
 These tests will verify that the logic of configuring pins, reading and writing data, and sending/receiving messages is correct.
 
+
+
+
+
+[CORRECTION SPI] (don't hesitate to remove this part)
+You should implement the peripheral/slave mode as well (not only the controler/master mode).
+You could abstract more the register content, for example ```(1 << 6) | (1 << 4) | (1 << 1)``` is not very explicit, you may want to customize your parameters more accurately (therefore you could use more freely all the part of your registers (CPOL, CPHA, BR, MSTR...)).
